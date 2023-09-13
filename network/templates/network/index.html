@@ -2,101 +2,121 @@
 
 {% block body %}
 <h2>All Posts</h2>
-     <!--New Post-->
-     <form action="{% url 'new_post' %}" method="post">
-        {% csrf_token %}
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">New Post</h5>
-                <div class="form-group">
-                    <textarea class="form-control" name="content" id="content" rows="3" placeholder="What's on your mind?"></textarea>
-                </div>
+<!--New Post-->
+<form action="{% url 'new_post' %}" method="post">
+    {% csrf_token %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">New Post</h5>
+            <div class="form-group">
+                <textarea class="form-control" name="content" id="content" rows="3"
+                    placeholder="What's on your mind?"></textarea>
+            </div>
+            <br>
+            <button class="btn btn-primary" id="submit">Post</button>
+        </div>
+    </div>
+</form>
+<br>
+<!--All Posts-->
+
+{% for post in posts %}
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">{{ post.user }}</h5>
+        <p class="card-text">{{ post.post }}</p>
+        <p class="card-text">{{ post.timestamp }}</p>
+        {% if user.is_authenticated %}
+        {% if post.user == user %}
+        <form action="{% url 'edit_post' post.id %}" method="post">
+            {% csrf_token %}
+            <div class="form-group" style="display: none !important;" id="edit_post-form">
+                <textarea class="form-control" name="content" id="content" rows="3">{{ post.post }}</textarea>
                 <br>
                 <button class="btn btn-primary" id="submit">Post</button>
             </div>
-         </div>
-    </form>
-    <br>
-    <!--All Posts-->
-
-    {% for post in posts %}
+        </form>
+        <div class="btn-group">
+            <button class="btn btn-success" id="edit_post">Edit</button>
+            <form action="{% url 'delete_post' post.id %}" method="post">
+                {% csrf_token %}
+                <button class="btn btn-danger" id="delete">Delete</button>
+            </form>
+            <button class="btn btn-info">{{ post.likes }}</button>
+            {% endif %}
+            <form action="{% url 'like_post' post.id %}" method="post">
+                {% csrf_token %}
+                <button class="btn btn-primary" id="like">Like</button>
+            </form>
+            <button class="btn btn-warning" id="comment">Comment</button>
+            {% endif %}
+        </div>
+        <br>
+        <br>
+        <!--Comment-->
+        {% if user.is_authenticated %}
+        <form action="{% url 'comment' post.id %}" method="post">
+            {% csrf_token %}
+            <div class="form-group" style="display: none !important;" id="comment-form">
+                <textarea class="form-control" name="comment" id="comment" rows="3" placeholder="Comment"></textarea>
+                <br>
+                <button class="btn btn-primary" id="submit">Comment</button>
+            </div>
+        </form>
+        {% endif %}
+        <!--Comments-->
+        {% if comments %}
+        <h5 class="card-title">Comments</h5>
+        {% for comment in comments %}
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">{{ post.user }}</h5>
-                <p class="card-text">{{ post.post }}</p>
-                <p class="card-text">{{ post.timestamp }}</p>
-                <div class="btn-group">
-                    {% if user.is_authenticated %}
-                    {% if post.user == user %}
-                        <button class="btn btn-success" id="edit">Edit</button>
-                        <form action="{% url 'delete_post' post.id %}" method="post">
-                            {% csrf_token %}
-                            <button class="btn btn-danger" id="delete">Delete</button>
-                        </form>
-                    {% endif %}
-                    <button class="btn btn-primary" id="like">Like</button>
-                    <button class="btn btn-primary" id="comment">Comment</button>
-                {% endif %}
-                </div>
-                <br>
-                <br>
-                <!--Comment-->
+                <p class="card-text">{{ comment.user }} commented on {{ comment.timestamp }}</p>
+                <p class="card-text">{{ comment.comment }}</p>
                 {% if user.is_authenticated %}
-                    <form action="{% url 'comment' post.id %}" method="post">
-                        {% csrf_token %}
-                        <div class="form-group" style="display: none !important;" id = "comment-form">
-                            <textarea class="form-control" name="comment" id="comment" rows="3" placeholder="Comment"></textarea>
-                            <br>
-                            <button class="btn btn-primary" id="submit">Comment</button>
-                        </div>
-                    </form>
-                {% endif %}
-                <!--Comments-->
-                {% if comments %}
-                    <h5 class="card-title">Comments</h5>
-                    {% for comment in comments %}
-                    <div class="card">
-                        <div class="card-body">
-                            <p class="card-text">{{ comment.user }} commented on {{ comment.timestamp }}</p>
-                            <p class="card-text">{{ comment.comment }}</p>
-                            {% if user.is_authenticated %}
-                                {% if comment.user == user %}
-                                <form action="{% url 'edit_comment' comment.id %}" method="post">
-                                    {% csrf_token %}
-                                    <div class="form-group" style="display: none !important;" id = "edit_comment-form">
-                                        <textarea class="form-control" name="comment" id="comment" rows="3" placeholder="Comment">{{ comment.comment }}</textarea>
-                                        <br>
-                                        <button class="btn btn-primary" id="submit">Comment</button>
-                                    </div>
-                                </form>
-                                <div class="btn-group">
-                                        <button class="btn btn-success" id="edit_comment">Edit</button>
-                                        <form action="{% url 'delete_comment' comment.id %}" method="post">
-                                            {% csrf_token %}
-                                            <button class="btn btn-danger" id="delete">Delete</button>
-                                        </form>
-                                    </div>
-                                {% endif %}
-                            {% endif %}
-                        </div>
+                {% if comment.user == user %}
+                <form action="{% url 'edit_comment' comment.id %}" method="post">
+                    {% csrf_token %}
+                    <div class="form-group" style="display: none !important;" id="edit_comment-form">
+                        <textarea class="form-control" name="comment" id="comment" rows="3"
+                            placeholder="Comment">{{ comment.comment }}</textarea>
+                        <br>
+                        <button class="btn btn-primary" id="submit">Comment</button>
                     </div>
-                    <br>
-                    {% endfor %}
+                </form>
+                <div class="btn-group">
+                    <button class="btn btn-success" id="edit_comment">Edit</button>
+                    <form action="{% url 'delete_comment' comment.id %}" method="post">
+                        {% csrf_token %}
+                        <button class="btn btn-danger" id="delete">Delete</button>
+                    </form>
+                </div>
+                {% endif %}
                 {% endif %}
             </div>
         </div>
-    {% endfor %}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelector('#comment').addEventListener('click', () => {
-                document.querySelector('#comment-form').style.display = 'block';
-            });
+        <br>
+        {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelector('#edit_post').addEventListener('click', () => {
+            document.querySelector('#edit_post-form').style.display = 'block';
         });
+    });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelector('#edit_comment').addEventListener('click', () => {
-                document.querySelector('#edit_comment-form').style.display = 'block';
-            });
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelector('#comment').addEventListener('click', () => {
+            document.querySelector('#comment-form').style.display = 'block';
         });
-    </script>
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelector('#edit_comment').addEventListener('click', () => {
+            document.querySelector('#edit_comment-form').style.display = 'block';
+        });
+    });
+</script>
 {% endblock %}

@@ -100,7 +100,7 @@ def delete_post (request, post_id):
 def like_post (request, post_id):
     if request.method == "POST":
         post = Post.objects.get(id=post_id)
-        post.likes.add(request.user)
+        post.likes += 1
         post.save()
         return HttpResponseRedirect(reverse("index"))
     else:
