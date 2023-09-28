@@ -1,0 +1,12 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+<h1>Following Posts</h1>
+<ul>
+    {% for post in posts %}
+        <li>{{ post.post }}</li>
+    {% empty %}
+        <li>No posts from followed users.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

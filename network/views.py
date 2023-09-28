@@ -3,16 +3,21 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django.core.paginator import Paginator
 
-from .models import User, Post, Comment
+from .models import User, Post, Comment, Follow
 
 
 def index(request):
     posts = Post.objects.all()
     comments = Comment.objects.all()
+    paginator = Paginator(posts, 2)
+    page_number = request.GET.get('page')
+    page = paginator.get_page(page_number)
     return render(request, "network/index.html", {
-        "posts": posts,
-        "comments": comments
+        "comments": comments,
+        "page": page,
+        "posts": posts
     })
 
 
@@ -135,3 +140,51 @@ def delete_comment (request, comment_id):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "network/index.html")
+
+def profile(request, username):
+    user_profile = User.objects.get(username=username)
+    is_following = Follow.objects.filter(user=user_profile, following=request.user).exists()
+
+    # Retrieve user's posts and comments here
+    posts = Post.objects.filter(user=user_profile).order_by('-timestamp')
+    comments = Comment.objects.filter(user=user_profile).order_by('-timestamp')
+
+    return render(request, 'network/profile.html', {
+        'user_profile': user_profile,
+        'is_following': is_following,
+        'posts': posts,
+        'comments': comments,
+    })
+
+def follow(request, username):
+    user_to_follow = User.objects.get(username=username)
+    Follow.objects.create(user=user_to_follow, follower=user_to_follow, following= request.user)
+    return render(request, 'network/profile.html', {
+        'user_profile': user_to_follow,
+        'is_following': True,
+    })
+
+def unfollow(request, username):
+    user_to_unfollow = User.objects.get(username=username)
+    Follow.objects.filter(user=user_to_unfollow, following=request.user).delete()	
+    return render(request, 'network/profile.html', {
+        'user_profile': user_to_unfollow,
+        'is_following': False,
+    })
+
+def following(request, username):
+    user_profile = User.objects.get(username=username)
+    is_following = Follow.objects.filter(user=user_profile, follower=request.user).exists()
+
+    # Get the IDs of the users that the user is following
+    following_ids = user_profile.following.all().values_list('pk', flat=True)
+
+    # Get the posts of the users that the user is following
+    posts = Post.objects.filter(user__in=following_ids).order_by('-timestamp')
+
+    return render(request, 'network/following.html', {
+        'user_profile': user_profile,
+        'is_following': is_following,
+        'posts': posts,
+    })
+

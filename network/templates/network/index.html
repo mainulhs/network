@@ -13,14 +13,18 @@
                     placeholder="What's on your mind?"></textarea>
             </div>
             <br>
+            {% if user.is_authenticated %}
             <button class="btn btn-primary" id="submit">Post</button>
+            {% else %}
+            <a href="{% url 'login' %}">Log In</a> to post.
+            {% endif %}
         </div>
     </div>
 </form>
 <br>
 <!--All Posts-->
 
-{% for post in posts %}
+{% for post in page %}
 <div class="card">
     <div class="card-body">
         <h5 class="card-title">{{ post.user }}</h5>
@@ -42,22 +46,26 @@
                 {% csrf_token %}
                 <button class="btn btn-danger" id="delete">Delete</button>
             </form>
+        </div>
+        {% endif %}
+        {% endif %}
+        {% if user.is_authenticated %}
+        <div class="btn-group">
             <button class="btn btn-info">{{ post.likes }}</button>
-            {% endif %}
             <form action="{% url 'like_post' post.id %}" method="post">
                 {% csrf_token %}
                 <button class="btn btn-primary" id="like">Like</button>
             </form>
-            <button class="btn btn-warning" id="comment">Comment</button>
-            {% endif %}
+            <button class="btn btn-warning" id="comment" data-post-id="{{ post.id }}">Comment</button>
         </div>
+        {% endif %}
         <br>
         <br>
         <!--Comment-->
         {% if user.is_authenticated %}
         <form action="{% url 'comment' post.id %}" method="post">
             {% csrf_token %}
-            <div class="form-group" style="display: none !important;" id="comment-form">
+            <div class="form-group" style="display: none !important;" id="comment-form-{{ post.id }}">
                 <textarea class="form-control" name="comment" id="comment" rows="3" placeholder="Comment"></textarea>
                 <br>
                 <button class="btn btn-primary" id="submit">Comment</button>
@@ -68,6 +76,7 @@
         {% if comments %}
         <h5 class="card-title">Comments</h5>
         {% for comment in comments %}
+        {% if comment.post == post %}
         <div class="card">
             <div class="card-body">
                 <p class="card-text">{{ comment.user }} commented on {{ comment.timestamp }}</p>
@@ -95,23 +104,57 @@
             </div>
         </div>
         <br>
+        {% endif %}
         {% endfor %}
         {% endif %}
     </div>
 </div>
+<br>
 {% endfor %}
+<div class="pagination d-flex justify-content-center">
+    {% if page.has_previous %}
+        <a href="?page=1" class="btn btn-primary">First</a> &nbsp;
+        <a href="?page={{ page.previous_page_number }}" class="btn btn-primary">Previous</a> &nbsp;
+    {% endif %}
+
+    <a class="btn btn-outline-success disabled">
+        Page {{ page.number }} of {{ page.paginator.num_pages }}
+    </a>
+
+    {% if page.has_next %}
+        <a href="?page={{ page.next_page_number }}" class="btn btn-primary">Next</a> &nbsp;
+        <a href="?page={{ page.paginator.num_pages }}" class="btn btn-primary">Last</a>
+    {% endif %}
+</div>
+
+{% block script %}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelector('#edit_post').addEventListener('click', () => {
             document.querySelector('#edit_post-form').style.display = 'block';
         });
     });
-
+    
     document.addEventListener('DOMContentLoaded', function () {
-        document.querySelector('#comment').addEventListener('click', () => {
-            document.querySelector('#comment-form').style.display = 'block';
+        // Iterate through all the "Comment" buttons
+        document.querySelectorAll('#comment').forEach(button => {
+            button.addEventListener('click', () => {
+                // Extract the post ID from the button's data-post-id attribute
+                const postId = button.getAttribute('data-post-id');
+                // Construct the ID of the corresponding comment form
+                const commentFormId = `#comment-form-${postId}`;
+                console.log("Comment Form ID:", commentFormId); 
+                // Toggle the display of the comment form
+                const commentForm = document.querySelector(commentFormId);
+                if (commentForm) {
+                    commentForm.style.display = 'block';
+                } else {
+                    console.error("Comment Form not found for ID:", postId);
+                }
+            });
         });
     });
+    
 
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelector('#edit_comment').addEventListener('click', () => {
@@ -119,4 +162,5 @@
         });
     });
 </script>
+{% endblock %}
 {% endblock %}

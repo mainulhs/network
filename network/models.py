@@ -29,11 +29,9 @@ class Comment(models.Model):
 
 class Follow(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="follows")
-    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name="followers")
-    following = models.ForeignKey(User, on_delete=models.CASCADE, related_name="following")
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name="followers", null=True)
+    following = models.ForeignKey(User, on_delete=models.CASCADE, related_name="following", null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user} followed {self.follower} on {self.timestamp}"
-
-    
